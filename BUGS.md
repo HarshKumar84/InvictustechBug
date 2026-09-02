@@ -43,6 +43,17 @@ Keep this file in the repo and **commit it** with your fixes.
 
 ## Bug 4
 
+**How to reproduce:** Look at the "Settle up" panel with default data (after balance calculation fixes). Aisha Khan owes $85.01, Ben Okonkwo is owed $59.00, Carlos Mendes owes $16.99, and Diya Patel is owed $43.00. Aisha pays Ben $59.00 and Diya $26.01, leaving Carlos owing $16.99 and Diya owed $16.99. However, the Settle up panel fails to suggest "Carlos Mendes pays Diya Patel $16.99".
+
+**What is wrong:** In `src/lib/settle.js`, inside the `while` loop of `suggestSettlements`, when a debtor's amount equals a creditor's amount (`d.amount === c.amount`), the algorithm executed the `else` block which incremented `i` and `j` without recording the transfer (`transfers.push(...)`). As a result, exact matching debts and credits were silently skipped, leaving members unsettled.
+
+**What I changed:**
+- In `src/lib/settle.js`, updated the equal amount case (`Math.abs(diff) < 0.001`) to push the transfer to the `transfers` array before advancing both debtor and creditor pointers.
+
+---
+
+## Bug 5
+
 **How to reproduce:**
 
 **What is wrong:**
