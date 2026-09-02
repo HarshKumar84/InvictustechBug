@@ -157,4 +157,4 @@
 * Added an effect in `src/components/ExpenseList.jsx` to keep the input value in sync with the expense amount.
 * Added Enter-key handling so an amount edit can be committed by pressing Enter.
 * Updated `formatMoney` in `src/lib/money.js` to display values that round to zero as `$0.00` instead of `-$0.00`.
-x
+
