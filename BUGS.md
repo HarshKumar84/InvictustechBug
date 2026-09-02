@@ -21,6 +21,17 @@ Keep this file in the repo and **commit it** with your fixes.
 
 ## Bug 2
 
+**How to reproduce:** Open the app with default data. Look at the "Balances" panel on the right. Ben Okonkwo (who paid more than his share and is owed money by the group) is displayed in red as "owes $59.00", while Aisha Khan (who consumed more than she paid and owes the group) is displayed in green as "is owed $85.01".
+
+**What is wrong:** The positive/negative balance logic was inverted. In group accounting, a positive balance means the member paid more than their consumed share and is in credit ("is owed", displayed in green), whereas a negative balance means the member consumed more than they paid and is in debt ("owes", displayed in red).
+
+**What I changed:**
+- In `src/components/BalancesPanel.jsx`, updated the condition checks so that `bal > 0.005` renders `is owed ${formatMoney(bal)}` with class `"owed"`, and `bal < -0.005` renders `owes ${formatMoney(-bal)}` with class `"owe"`.
+
+---
+
+## Bug 3
+
 **How to reproduce:**
 
 **What is wrong:**
