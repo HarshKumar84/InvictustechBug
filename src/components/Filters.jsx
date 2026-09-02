@@ -19,7 +19,7 @@ export default function Filters({
             id="search"
             value={query}
             onChange={(e) => onQuery(e.target.value)}
-            placeholder="Description…"
+            placeholder="Search…"
           />
         </div>
         <div className="field">
@@ -44,7 +44,7 @@ export default function Filters({
             key={c}
             type="button"
             className={`chip ${category === c ? "on" : ""}`}
-            onClick={() => onCategory(c)}
+            onClick={() => onCategory(category === c && c !== "All" ? "All" : c)}
           >
             {c}
           </button>

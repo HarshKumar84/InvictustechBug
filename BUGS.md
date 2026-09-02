@@ -54,12 +54,14 @@ Keep this file in the repo and **commit it** with your fixes.
 
 ## Bug 5
 
-**How to reproduce:** In the "Filter" card, select any member from the "Paid by" dropdown (e.g., "Aisha Khan" or "Ben Okonkwo").
+**How to reproduce:** In the "Filter" card, select any member from the "Paid by" dropdown (e.g., "Aisha Khan" or "Ben Okonkwo"). Or type a category/person name into the search box.
 
-**What is wrong:** The expense list becomes empty ("No expenses match these filters.") even though the selected member paid for several expenses. The `<select>` element emits a string ID (e.g. `"1"`), whereas `e.paidBy` is stored as a number (`1`). The filter in `App.jsx` used strict inequality `e.paidBy !== paidBy` (`1 !== "1"`), which is always true.
+**What is wrong:** The expense list became empty ("No expenses match these filters.") even though the selected member paid for several expenses. The `<select>` element emits a string ID (e.g. `"1"`), whereas `e.paidBy` is stored as a number (`1`), causing the strict inequality filter `e.paidBy !== paidBy` (`1 !== "1"`) to fail all matches. In addition, the search input was only searching description text rather than matching categories or member names, and placeholder was hardcoded as "Description…".
 
 **What I changed:**
-- In `src/App.jsx`, changed the filter condition to `if (paidBy !== "" && String(e.paidBy) !== String(paidBy)) return false;` so that member IDs are compared reliably regardless of type.
+- In `src/App.jsx`, updated the `paidBy` filter to compare IDs reliably via `String(e.paidBy) !== String(paidBy)`.
+- In `src/App.jsx`, enhanced search filtering to check against expense description, category, and payer/member names.
+- In `src/components/Filters.jsx`, changed search input placeholder from `Description…` to `Search…` and enabled toggling category chips back to "All" when clicked again.
 
 ---
 

@@ -28,15 +28,26 @@ export default function App() {
     persistState(state);
   }, [state]);
 
+  const memberMap = useMemo(
+    () => Object.fromEntries(state.members.map((m) => [m.id, m.name.toLowerCase()])),
+    [state.members]
+  );
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return state.expenses.filter((e) => {
-      if (q && !e.description.toLowerCase().includes(q)) return false;
+      if (q) {
+        const matchDesc = e.description.toLowerCase().includes(q);
+        const matchCat = (e.category || "").toLowerCase().includes(q);
+        const payerName = memberMap[e.paidBy] || "";
+        const matchPayer = payerName.includes(q);
+        if (!matchDesc && !matchCat && !matchPayer) return false;
+      }
       if (category !== "All" && e.category !== category) return false;
       if (paidBy !== "" && String(e.paidBy) !== String(paidBy)) return false;
       return true;
     });
-  }, [state.expenses, query, category, paidBy]);
+  }, [state.expenses, query, category, paidBy, memberMap]);
 
   const balances = useMemo(
     () => computeBalances(state.members, state.expenses),
