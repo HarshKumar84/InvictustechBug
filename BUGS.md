@@ -54,10 +54,91 @@ Keep this file in the repo and **commit it** with your fixes.
 
 ## Bug 5
 
-**How to reproduce:**
+**How to reproduce:** In the "Filter" card, select any member from the "Paid by" dropdown (e.g., "Aisha Khan" or "Ben Okonkwo").
 
-**What is wrong:**
+**What is wrong:** The expense list becomes empty ("No expenses match these filters.") even though the selected member paid for several expenses. The `<select>` element emits a string ID (e.g. `"1"`), whereas `e.paidBy` is stored as a number (`1`). The filter in `App.jsx` used strict inequality `e.paidBy !== paidBy` (`1 !== "1"`), which is always true.
 
 **What I changed:**
+- In `src/App.jsx`, changed the filter condition to `if (paidBy !== "" && String(e.paidBy) !== String(paidBy)) return false;` so that member IDs are compared reliably regardless of type.
 
 ---
+
+## Bug 6
+
+**How to reproduce:** Filter expenses by category (e.g. "Stay") or sort them by date, then click "Delete" on an expense or change its amount in the input field.
+
+**What is wrong:** `ExpenseList.jsx` passed the array index of the sorted/filtered list to `onDeleteAt(index)` and `onUpdateAt(index, patch)`. The reducer in `src/state/store.js` modified `state.expenses[action.index]`, assuming the index matched `state.expenses`. When filtered or reordered, the visual index does not match the store index, causing the wrong expense to be deleted or edited. Additionally, using array indices as React keys (`key={index}`) caused stale local input states.
+
+**What I changed:**
+- In `src/state/store.js`, updated `DELETE_EXPENSE` to filter by `e.id !== action.id` and `UPDATE_EXPENSE` to map by `e.id === action.id`.
+- In `src/App.jsx` and `src/components/ExpenseList.jsx`, passed `expense.id` to `onDelete` and `onUpdate`, and keyed rows by `key={expense.id}`.
+
+---
+
+## Bug 7
+
+**How to reproduce:** Add an expense of $100 split equally among 3 members (like Groceries in default data). Each member gets $33.33, totaling $99.99 instead of $100.00. The group loses $0.01 in the split, causing group balances to not sum to zero.
+
+**What is wrong:** In `src/lib/money.js`, `splitEqual` computed `(amount / n).toFixed(2)` and assigned the exact same rounded float to all participants without allocating remainder cents.
+
+**What I changed:**
+- In `src/lib/money.js`, rewrote `splitEqual` to allocate exact cents (`totalCents = Math.round(amount * 100)`), computing base cents and distributing remainder cents (`rem = totalCents % n`) to the first `rem` members so the sum of shares always matches the total bill down to the last penny.
+
+---
+
+## Bug 8
+
+**How to reproduce:** In the "Add expense" form, select "Custom %" with 3 members and enter 33.33, 33.33, and 33.34. Click "Save expense". The form displays the error "Percentages must add to 100."
+
+**What is wrong:** In `src/lib/money.js`, `percentsSumTo100` checked `sum === 100`. JavaScript floating-point arithmetic can produce values like `100.00000000000001`, failing strict equality. Additionally, `splitByPercent` rounded each percentage share independently, which could create a discrepancy with the total amount.
+
+**What I changed:**
+- In `src/lib/money.js`, updated `percentsSumTo100` to check `Math.abs(sum - 100) < 0.01`.
+- In `src/lib/money.js`, updated `splitByPercent` to compute shares in integer cents and allocate any leftover cent to ensure the sum of shares equals the full expense amount.
+
+---
+
+## Bug 9
+
+**How to reproduce:** Under "Summary", type a new name in "Add member" (e.g. "Maya") and click "Add". Look at the "Paid so far" list below.
+
+**What is wrong:** The total member count increments to 5, but the "Paid so far" list still only lists the original 4 members. `perPerson` in `SummaryCards.jsx` was wrapped in `useMemo(..., [expenses])` with `members` omitted from the dependency array, so adding a member did not trigger recalculation.
+
+**What I changed:**
+- In `src/components/SummaryCards.jsx`, added `members` to the dependency array of `useMemo` (`[members, expenses]`).
+
+---
+
+## Bug 10
+
+**How to reproduce:** Look at the date column in the expense list across different timezones. In timezones west of UTC, `new Date("2026-03-12")` parsed as UTC midnight and shifted backward to the previous day ("11 Mar 2026"). Furthermore, newly added expenses were stored as `Date` objects while seed/localStorage stored strings, causing serialization inconsistency on reload.
+
+**What is wrong:** Date strings were passed to `new Date(string)` without handling timezone offset, and dates were inconsistently typed across the store and components.
+
+**What I changed:**
+- In `src/lib/format.js`, updated `formatDate` and `dateValue` to parse `YYYY-MM-DD` strings in local time.
+- In `src/state/store.js` and `src/components/AddExpenseForm.jsx`, standardized date storage as consistent `YYYY-MM-DD` ISO date strings.
+
+---
+
+## Bug 11
+
+**How to reproduce:** Fill out the "Add expense" form with a description and amount and click "Save expense".
+
+**What is wrong:** The expense is added to the list, but the form inputs (description, amount) remain populated with the previous values instead of resetting for the next entry.
+
+**What I changed:**
+- In `src/components/AddExpenseForm.jsx`, reset `description` to `""`, `amount` to `""`, and `error` to `""` in the submit handler upon successful submission.
+
+---
+
+## Bug 12
+
+**How to reproduce:** Add an expense or edit its amount from another source, or observe amounts near zero formatted with tiny negative values (which displayed as `-$0.00`).
+
+**What is wrong:** In `ExpenseRow`, `draft` state was initialized only once with `useState` and never synchronized when `expense.amount` prop changed. Also `formatMoney` did not guard against negative zero representation (`-$0.00`).
+
+**What I changed:**
+- In `src/components/ExpenseList.jsx`, added `useEffect` to synchronize `draft` with `expense.amount` and added `onKeyDown` to allow committing edits by pressing Enter.
+- In `src/lib/money.js`, added a check in `formatMoney` to return `"$0.00"` whenever the absolute formatted value is `"0.00"`.
+

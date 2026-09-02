@@ -61,9 +61,13 @@ export default function AddExpenseForm({ members, onAdd }) {
       splitType,
       splitWith: splitWith.map(Number),
       percents: splitType === "percent" ? percents : undefined,
-      date: new Date(date),
+      date: typeof date === "string" ? date : date.toISOString().slice(0, 10),
       category,
     });
+
+    setDescription("");
+    setAmount("");
+    setError("");
   }
 
   return (
