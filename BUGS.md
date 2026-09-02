@@ -32,6 +32,17 @@ Keep this file in the repo and **commit it** with your fixes.
 
 ## Bug 3
 
+**How to reproduce:** In the default data, look at expense `e2` ("Uber to airport", $60 paid by Diya Patel for Aisha Khan and Ben Okonkwo). Diya is not in `splitWith`. Diya paid a total of $96 ($60 Uber + $36 Board game) and consumed a total of $53 ($20 dinner + $24 museum + $9 board game), so she is owed $96 - $53 = +$43.00. However, the app computed her balance as only +$13.00 ($30 less).
+
+**What is wrong:** In `src/lib/balances.js`, `computeBalances` contained an erroneous check `if (!(exp.paidBy in shares) && !(String(exp.paidBy) in shares))` that deducted `amount / n` from the payer's balance whenever they were not part of the split. This directly violated the requirement that a member who pays for others without participating in the expense is entitled to full reimbursement.
+
+**What I changed:**
+- In `src/lib/balances.js`, removed the invalid penalty deduction block so that non-participating payers are properly credited for the full amount they paid.
+
+---
+
+## Bug 4
+
 **How to reproduce:**
 
 **What is wrong:**
